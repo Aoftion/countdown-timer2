@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <title>เวลาคงเหลือของ Item ที่วางขาย</title>
+  <style>
+    body {
+      font-family: 'Prompt', sans-serif;
+      background-color: #f6f6f6;
+      color: #333;
+      padding: 30px;
+    }
+    h1 {
+      text-align: center;
+      color: #6c7a89;
+      font-weight: 500;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      background-color: #fff;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+    th, td {
+      padding: 12px;
+      border-bottom: 1px solid #eee;
+      text-align: center;
+      font-size: 0.95em;
+    }
+    th {
+      background-color: #e9f1f7;
+      color: #4a6fa5;
+    }
+    input {
+      width: 100%;
+      padding: 8px;
+      font-size: 0.95em;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      background-color: #fdfdfd;
+    }
+    button {
+      padding: 8px 16px;
+      font-size: 0.9em;
+      margin: 5px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      background-color: #c5dff8;
+      color: #3a4e70;
+    }
+    button:hover {
+      background-color: #b0d0f0;
+    }
+    .status {
+      font-weight: bold;
+      color: #6a9fb5;
+    }
+  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+  <h1>เวลาคงเหลือของ Item ที่วางขาย</h1>
+  <table id="countdownTable">
+    <thead>
+      <tr>
+        <th>ชื่อตัวละคร</th>
+        <th>ชื่อไอเท็ม</th>
+        <th>เวลานับถอยหลัง (ชั่วโมง.นาที.วินาที)</th>
+        <th>จำนวน</th>
+        <th>อื่นๆ</th>
+        <th>สถานะ</th>
+        <th>ควบคุม</th>
+      </tr>
+    </thead>
+    <tbody id="tableBody">
+      <tr>
+        <td><input type="text" placeholder="ชื่อตัวละคร"></td>
+        <td><input type="text" placeholder="ชื่อไอเท็ม"></td>
+        <td><input type="text" placeholder="1.20.30"></td>
+        <td><input type="number" placeholder="จำนวน"></td>
+        <td><input type="text" placeholder="อื่นๆ"></td>
+        <td class="status">--:--:--</td>
+        <td><button onclick="startCountdown(this)">▶️ เริ่ม</button></td>
+      </tr>
+    </tbody>
+  </table>
+  <button onclick="addRow()">➕ เพิ่มแถว</button>
+
+  <script>
+    const countdowns = new Map();
+
+    function addRow() {
+      const table = document.getElementById('tableBody');
+      const row = table.insertRow();
+      for (let i = 0; i < 5; i++) {
+        const cell = row.insertCell();
+        const input = document.createElement('input');
+        input.type = (i === 3) ? 'number' : 'text';
+        input.placeholder = i === 2 ? '1.20.30' : '';
+        cell.appendChild(input);
+      }
+      const statusCell = row.insertCell();
+      statusCell.className = 'status';
+      statusCell.innerText = '--:--:--';
+
+      const controlCell = row.insertCell();
+      const btn = document.createElement('button');
+      btn.innerText = '▶️ เริ่ม';
+      btn.onclick = function () { startCountdown(btn); };
+      controlCell.appendChild(btn);
+    }
+
+    function startCountdown(button) {
+      const row = button.parentNode.parentNode;
+      const timeInput = row.cells[2].querySelector('input').value.trim();
+      const statusCell = row.cells[5];
+
+      const parts = timeInput.split('.');
+      if (parts.length !== 3) {
+        statusCell.innerText = 'รูปแบบไม่ถูกต้อง';
+        return;
+      }
+
+      const [h, m, s] = parts.map(Number);
+      let total = h * 3600 + m * 60 + s;
+
+      if (isNaN(total) || total <= 0) {
+        statusCell.innerText = 'เวลาไม่ถูกต้อง';
+        return;
+      }
+
+      if (countdowns.has(row)) {
+        clearInterval(countdowns.get(row));
+      }
+
+      updateStatus(statusCell, total);
+      const interval = setInterval(() => {
+        total--;
+        if (total <= 0) {
+          clearInterval(interval);
+          statusCell.innerText = 'หมดเวลา!';
+        } else {
+          updateStatus(statusCell, total);
+        }
+      }, 1000);
+
+      countdowns.set(row, interval);
+    }
+
+    function updateStatus(cell, totalSeconds) {
+      const h = String(Math.floor(totalSeconds / 3600)).padStart(2, '0');
+      const m = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
+      const s = String(totalSeconds % 60).padStart(2, '0');
+      cell.innerText = `${h}:${m}:${s}`;
+    }
+  </script>
+</body>
+</html>
